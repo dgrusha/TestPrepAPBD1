@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "bESaCVRrq/DpVobQZQhtEVJe3df8I512fujqUenF0c8SYB3C5uGM9JviJ4oSu67ZlAKUMwsbrSe2MejrU7hCrQ==",
+  "dgSpecHash": "JiJo/Fia+2JsdDBxJu+XgaMRz+ZsGL7MdLw3nkrXfnR0rgp4H2lidD9vRQTIWLfjVgh2m9whLTXc8Sr4jkCF2Q==",
   "success": true,
-  "projectFilePath": "D:\\Rider\\Proj1\\tutorial-5-dgrusha\\Tutorial3\\Tutorial3.csproj",
+  "projectFilePath": "D:\\Rider\\Proj1\\TestPrepAPBD1\\TestPrep\\TestPrep.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Dima\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
     "C:\\Users\\Dima\\.nuget\\packages\\microsoft.netcore.platforms\\3.1.0\\microsoft.netcore.platforms.3.1.0.nupkg.sha512",

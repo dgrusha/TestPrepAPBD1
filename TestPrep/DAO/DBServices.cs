@@ -7,93 +7,179 @@ namespace Tutorial3.DAO
 {
     public class DBServices : IDBServices
     {
-        
-        public bool CheckExistence1(int idProduct, int idWarehouse)
+        public static T ConvertFromDBVal<T>(object obj)
         {
-            bool res1 = false;
-            bool res2 = false;
-            using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
-            using(var com = new SqlCommand())
+            if (obj == null || obj == DBNull.Value)
             {
-                com.Connection = con;
-                com.CommandText = "Select Count(1) as counter from WareHouse as wr Where wr.IdWarehouse = @id ";
-                com.Parameters.AddWithValue("id", idWarehouse);
-                con.Open();
-                var dr = com.ExecuteReader();
-                Console.WriteLine("data");
-                while (dr.Read())
-                {
-                    int count = (int) dr["counter"];
-                    Console.WriteLine(count);
-                    if (count >= 1) res1 = true;
-                }
-                dr.Close();
-                com.CommandText = "Select Count(1) as counter from Product as pr Where pr.IdProduct = @id2 ";
-                com.Parameters.AddWithValue("id2", idProduct);
-                dr = com.ExecuteReader();
-                while (dr.Read())
-                {
-                    int count = (int) dr["counter"];
-                    if (count >= 1) res2 = true;
-                }
+                return default(T);
             }
-            return res1 && res2;
+            else
+            {
+                return (T)obj;
+            }
         }
         
-        public int CheckExistence2(int idProduct,int amount, DateTime createdAt)
+        public bool CheckIfIdExist(int id)
         {
-            int res1 = -1;
+            
+            int tmp_res = 0;
             using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
             using(var com = new SqlCommand())
             {
                 com.Connection = con;
-                com.CommandText = "Select ord.IdOrder as orderId from  Order1 as ord Where ord.IdProduct = @id and ord.Amount = @amount and ord.CreatedAt < @Cdate";
-                com.Parameters.AddWithValue("id", idProduct);
-                com.Parameters.AddWithValue("amount", amount);
-                com.Parameters.AddWithValue("Cdate", createdAt);
+                com.CommandText = "Select Count(1) as counter from  FireTruck as ft Where ft.IdFiretruck = @id";
+                com.Parameters.AddWithValue("id", id);
                 con.Open();
                 var dr = com.ExecuteReader();
-                Console.WriteLine("data");
                 while (dr.Read())
                 {
-                    res1 = (int) dr["orderId"];
-                    Console.WriteLine(res1);
+                    tmp_res = (int) dr["counter"];
                 }
-                
+
+                return tmp_res >= 1;
             }
-            return res1;
         }
 
-        public int ExistOrderInProdWarehouse(int OrderId)
+        public Truck ReturnTheTruck(int id)
         {
-            int res1 = 1;
+            int tmp_res = 0;
             using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
             using(var com = new SqlCommand())
             {
                 com.Connection = con;
-                com.CommandText = "Select Count(1) as exist from  Product_Warehouse as wr Where wr.IdOrder = @id";
-                com.Parameters.AddWithValue("id", OrderId);
+                com.CommandText = "Select *  from  FireTruck as ft Where ft.IdFiretruck = @id";
+                com.Parameters.AddWithValue("id", id);
+                con.Open();
+                var dr = com.ExecuteReader();
+                Truck truck = null;
+                while (dr.Read())
+                {
+                     truck = new Truck
+                    {
+                        IDTuck = (int) dr["IdFireTruck"],
+                        OperationNumber = (string)dr["OperationNumber"],
+                        SpecialEquipment = (bool)dr["SpecialEquipment"],
+                        Actions = ReturnActions(id)
+                    };
+                }
+
+                return truck;
+            }
+        }
+
+        public List<Action> ReturnActions(int id)
+        {
+            List<int> ActionCodes = ReturnActionCodes(id);
+            List<Action> res = new List<Action>();
+            for (int i = 0; i < ActionCodes.Count; i++)
+            {
+                using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
+                using(var com = new SqlCommand())
+                {
+                    //Finding number of firefighters
+                    int FireFighetrsCounter = 0;
+                    com.Connection = con;
+                    com.CommandText = "Select Count(1) as counter  from  FireFighter_Action as fa Where fa.idAction = @id";
+                    com.Parameters.AddWithValue("id", ActionCodes[i]);
+                    con.Open();
+                    var dr = com.ExecuteReader();
+                    while (dr.Read())
+                    {
+                        FireFighetrsCounter = (int) dr["counter"];
+                    }
+                    dr.Close();
+                    con.Close();
+                    //Finding assigment date
+                    DateTime AssDate = new DateTime();
+                    com.CommandText = "Select AssigmentDate as ad  from  FireTruck_Action as fa Where fa.idAction = @id3 and fa.IdFireTruck = @id2";
+                    com.Parameters.AddWithValue("id3", ActionCodes[i]);
+                    com.Parameters.AddWithValue("id2", id);
+                    con.Open();
+                    dr = com.ExecuteReader();
+                    while (dr.Read())
+                    {
+                        AssDate = (DateTime) dr["ad"];
+                    }
+                    dr.Close();
+                    con.Close();
+                    //Creating Action
+                    Action action = new Action();
+                    com.CommandText = "Select *  from  Action as a Where a.idAction = @id4";
+                    com.Parameters.AddWithValue("id4", ActionCodes[i]);
+                    con.Open();
+                    dr = com.ExecuteReader();
+                    while (dr.Read())
+                    {
+                        action = new Action
+                        {
+                            StartTime = dr["StartTime"] is DateTime ? (DateTime) dr["StartTime"] : default,
+                            EndTime = dr["EndTime"] is DateTime ? (DateTime) dr["EndTime"] : default,
+                            AssignedTime = AssDate,
+                            NumOfFirefight = FireFighetrsCounter
+                        };
+                    }
+                    res.Add(action);
+                    dr.Close();
+                    con.Close();
+                }
+            }
+
+            return res;
+        }
+
+        public List<int> ReturnActionCodes(int id)
+        {
+            List<int> res = new List<int>();
+            using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
+            using(var com = new SqlCommand())
+            {
+                com.Connection = con;
+                com.CommandText = "Select *  from  FireTruck_Action as fa Where fa.IdFiretruck = @id";
+                com.Parameters.AddWithValue("id", id);
+                con.Open();
+                var dr = com.ExecuteReader();
+                Truck truck = null;
+                while (dr.Read())
+                {
+                    if((int)dr["idAction"]>0)res.Add((int)dr["idAction"]);
+                }
+
+                return res;
+            }
+        }
+
+        public bool CheckDateConstraints(DateTime date, int id)
+        {
+            bool Res1 = false;
+            bool Res2 = false;
+            using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
+            using(var com = new SqlCommand())
+            {
+                com.Connection = con;
+                com.CommandText = "Select *  from  Action as a Where a.IdAction = @id";
+                com.Parameters.AddWithValue("id", id);
                 con.Open();
                 var dr = com.ExecuteReader();
                 while (dr.Read())
                 {
-                    res1 = (int) dr["exist"];
-                    Console.WriteLine(res1);
-                    if (res1 >= 1) res1 = -1;
+                    if((DateTime)dr["StartTime"]<date)Res1=true;
+                    DateTime EndTime = dr["EndTime"] is DateTime ? (DateTime) dr["EndTime"] : default;
+                    if(EndTime==DateTime.MinValue)Res1=true;
                 }
-                
+
+                return Res1&&Res2;
             }
-            return res1;
         }
 
-        public void UpdateDate(int OrderId)
+        public void UpdateDate(DateTime date, int id)
         {
             using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
             {
                 con.Open();
                 SqlTransaction tr = con.BeginTransaction();
-                SqlCommand command = new SqlCommand("Update Order1 Set FulfilledAt = GETDATE() Where IdOrder = @id",con,tr);
-                command.Parameters.AddWithValue("id", OrderId);
+                SqlCommand command = new SqlCommand("Update Action Set EndTime = @date Where IdAction = @id",con,tr);
+                command.Parameters.AddWithValue("id", id);
+                command.Parameters.AddWithValue("date", date);
                 Console.WriteLine("UPDATED");
                 command.ExecuteNonQuery();
                 tr.Commit();
@@ -101,88 +187,7 @@ namespace Tutorial3.DAO
                 con.Close();
             }
         }
-
-        public void InsertTestData(int idProduct,int idWarehouse,int orderId,int amount, DateTime createdAt)
-        {
-            using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
-            {
-                decimal Price = TakePrice(idProduct);
-                con.Open();
-                using (SqlTransaction tr = con.BeginTransaction())
-                {
-                    SqlCommand command = new SqlCommand(@"INSERT INTO Product_Warehouse( idWarehouse, idProduct, idOrder, Amount, Price, CreatedAt)
-                    VALUES(@idW, @idP, @idO, @Amount, @Price, GETDATE());", con,tr);
-                    command.Parameters.AddWithValue("idW", idWarehouse);
-                    command.Parameters.AddWithValue("idP", idProduct);
-                    command.Parameters.AddWithValue("idO", orderId);
-                    command.Parameters.AddWithValue("Amount", amount);
-                    command.Parameters.AddWithValue("Price", Price*amount);
-                    command.ExecuteNonQuery();
-                    tr.Commit();
-                }
-            }
-        }
-
-        public decimal TakePrice(int ProductId)
-        {
-            decimal res1 = -1;
-            using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
-            using(var com = new SqlCommand())
-            {
-                com.Connection = con;
-                com.CommandText = "Select Price as productPrice from  Product as pr Where pr.IdProduct = @id";
-                com.Parameters.AddWithValue("id", ProductId);
-                con.Open();
-                var dr = com.ExecuteReader();
-                while (dr.Read())
-                {
-                    res1 = (decimal) dr["productPrice"];
-                    Console.WriteLine(res1);
-                }
-                
-            }
-            return res1;
-        }
-
-        public int ReturnPK(int idProduct, int idWarehouse, int OrderId, int amount)
-        {
-            int res1 = -1;
-            using (var con = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
-            using(var com = new SqlCommand())
-            {
-                com.Connection = con;
-                com.CommandText = "Select IdProductWarehouse as resultPK from  Product_Warehouse  Where IdProduct = @idP and IdWarehouse = @idW and IdOrder = @idO and Amount = @Amount ";
-                com.Parameters.AddWithValue("idW", idWarehouse);
-                com.Parameters.AddWithValue("idP", idProduct);
-                com.Parameters.AddWithValue("idO", OrderId);
-                com.Parameters.AddWithValue("Amount", amount);
-                con.Open();
-                var dr = com.ExecuteReader();
-                while (dr.Read())
-                {
-                    res1 = (int) dr["resultPK"];
-                    Console.WriteLine(res1);
-                }
-                
-            }
-            return res1;
-        }
-
-        public void UseStoredProcedure(int idProduct, int idWarehouse, int amount, DateTime createdAt)
-        {
-            using (var conn = new SqlConnection("Data Source = db-mssql.pjwstk.edu.pl; Initial Catalog=2019SBD; Integrated Security = True"))
-            using (var command = new SqlCommand("AddProductToWarehouse", conn) { 
-                CommandType = CommandType.StoredProcedure }) {
-                conn.Open();
-                /*@IdProduct INT, @IdWarehouse INT, @Amount INT,  
-                    @CreatedAt DATETIME*/
-                command.Parameters.Add("@IdProduct", SqlDbType.Int).Value = idProduct;
-                command.Parameters.Add("@IdWarehouse", SqlDbType.Int).Value = idWarehouse;
-                command.Parameters.Add("@Amount", SqlDbType.Int).Value = amount;
-                command.Parameters.Add("@CreatedAt", SqlDbType.DateTime).Value = createdAt;
-                command.ExecuteNonQuery();
-            }
-
-        }
     }
+    
+    
 }

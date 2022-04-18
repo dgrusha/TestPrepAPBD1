@@ -693,11 +693,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Rider\\Proj1\\tutorial-5-dgrusha\\Tutorial3\\Tutorial3.csproj",
-      "projectName": "Tutorial3",
-      "projectPath": "D:\\Rider\\Proj1\\tutorial-5-dgrusha\\Tutorial3\\Tutorial3.csproj",
+      "projectUniqueName": "D:\\Rider\\Proj1\\TestPrepAPBD1\\TestPrep\\TestPrep.csproj",
+      "projectName": "TestPrep",
+      "projectPath": "D:\\Rider\\Proj1\\TestPrepAPBD1\\TestPrep\\TestPrep.csproj",
       "packagesPath": "C:\\Users\\Dima\\.nuget\\packages\\",
-      "outputPath": "D:\\Rider\\Proj1\\tutorial-5-dgrusha\\Tutorial3\\obj\\",
+      "outputPath": "D:\\Rider\\Proj1\\TestPrepAPBD1\\TestPrep\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Dima\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -1,22 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Tutorial3.DAO
 {
     public interface IDBServices
-    { 
-        public bool CheckExistence1(int idProduct, int idWarehouse);
-        public int CheckExistence2(int idProduct,int amount, DateTime createdAt);
+    {
+        public bool CheckIfIdExist(int id);
         
-        public int ExistOrderInProdWarehouse(int OrderId);
-
-        public void UpdateDate(int OrderId);
-
-        public void InsertTestData(int idProduct,int idWarehouse,int OrderId,int amount, DateTime createdAt);
+        public Truck ReturnTheTruck(int id);
         
-        public decimal TakePrice(int ProductId);
+        public List<Action> ReturnActions(int id);
 
-        public int ReturnPK(int idProduct, int idWarehouse, int OrderId, int amount);
+        public List<int> ReturnActionCodes(int id);
 
-        public void UseStoredProcedure(int idProduct, int idWarehouse, int amount, DateTime createdAt);
+        public bool CheckDateConstraints(DateTime date, int id);
+
+        public void UpdateDate(DateTime date, int id);
     }
 }
